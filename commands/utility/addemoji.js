@@ -36,7 +36,7 @@ module.exports = {
                 attachment: attachment.url,
                 name: emojiName,
             });
-            await interaction.reply('Zir Zorp, Beep Boop Glorp :)) :alien:');
+            await interaction.reply('Emoji has been added!');
         } catch (e) {
             console.error(e);
             await interaction.reply('There was a problem :(');

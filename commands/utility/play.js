@@ -1,16 +1,8 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { generateDependancyReport, AudioPlayerStatus, joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
-const config =  require('C:\\Users\\talma\\PhpstormProjects\\BotForDuck\\config.json');
-const { spawn } = require('child_process');
-const vidLink = require('C:\\Users\\talma\\PhpstormProjects\\BotForDuck\\mp3downloads\\vidLink.json');
-const fs = require('fs');
-const getMP3Duration = require('get-mp3-duration');
+const { AudioPlayerStatus, joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
 const axios = require("axios");
+const fs = require('fs');
 const path = require("path");
-/*
-const buffer = fs.readFileSync('C:\\Users\\talma\\Downloads\\faded.mp3');
-const duration = getMP3Duration(buffer);
- */
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -19,14 +11,12 @@ module.exports = {
         .addAttachmentOption(option =>
             option
                 .setName('file')
-                .setDescription('link to play')
+                .setDescription('MP3 file to play')
                 .setRequired(false)),
     async execute(interaction) {
-        //getLinkmp3(interaction.options.link);
         const attachment = interaction.options.getAttachment('file');
-        console.log(attachment.url);
         if (!attachment) {
-            await interaction.reply({ content: 'Please provide a valid MP3 file.', ephemeral: false });
+            await interaction.reply({ content: 'Please provide a valid MP3 file.', ephemeral: true });
             return;
         }
 
@@ -38,48 +28,11 @@ module.exports = {
             return;
         }
 
-        console.log("File downloaded (i hope)")
-        const guildId = config.guildId;
-        const voiceChannelId = config.musicChannelID;
-        const voiceChannel = interaction.client.channels.cache.get(voiceChannelId);
-
-        //create audio player
-        const player = createAudioPlayer();
-
-        player.on(AudioPlayerStatus.Playing, () => {
-            console.log("Player playing.");
-        });
-        player.on('error', error => {
-            console.error('Error: ${error.message} with resource');
-        });
-        const filePath = path.join(__dirname, 'temp.mp3');
-        const response = await axios.get(attachment.url, {responseType: 'arraybuffer'});
-        fs.writeFileSync(filePath,response.data);
-
-        /*
-
-        const resource = createAudioResource(filePath);
-        player.play(resource);
-
-        //connect to vc
-        const connection = joinVoiceChannel({
-            channelId: voiceChannelId,
-            guildId: guildId,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator
-        });
-        interaction.reply("created voice connection");
-
-        const subscription = connection.subscribe(player);
-        //const buffer = fs.readFileSync("C:\\Users\\talma\\Downloads\\urban-drum-pack-hi-hat-loop-avion_136bpm.mp3");
-        //const duration = getMP3Duration(buffer);
-        console.log(attachment.duration * 1000);
-        if (subscription) {
-            setTimeout(() => subscription.unsubscribe(), attachment.duration * 1000);
-            await sleep(attachment.duration * 1000);
-            connection.destroy();
+        const userVoiceChannel = interaction.member.voice.channel;
+        if (!userVoiceChannel) {
+            await interaction.reply({ content: 'You must be in a voice channel to use this command.', ephemeral: true });
+            return;
         }
-        //player.stop();
-        */
 
         try {
             // Download the attachment
@@ -87,9 +40,9 @@ module.exports = {
             const response = await axios.get(attachment.url, { responseType: 'arraybuffer' });
             fs.writeFileSync(filePath, response.data);
 
-            // Join the voice channel
+            // Join the user's voice channel
             const connection = joinVoiceChannel({
-                channelId: interaction.member.voice.channel.id,
+                channelId: userVoiceChannel.id,
                 guildId: interaction.guild.id,
                 adapterCreator: interaction.guild.voiceAdapterCreator,
             });
@@ -124,61 +77,3 @@ module.exports = {
         }
     },
 };
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function getLinkmp3(link) {
-    console.log(link);
-    fs.readFile('C:\\Users\\talma\\PhpstormProjects\\BotForDuck\\mp3downloads\\vidLink.json', 'utf8', (err, data) => {
-        if (err) {
-            console.error('Error reading the JSON file:', err);
-            return;
-        }
-
-        try {
-            // Parse the JSON data into an object
-            const jsonData = JSON.parse(data);
-
-            // Update the videoLink property
-            jsonData.linkToVid = link;
-
-            // Convert the updated object back to JSON
-            const updatedJsonData = JSON.stringify(jsonData, null, 4);
-
-            // Write the updated JSON back to the file
-            fs.writeFile('C:\\Users\\talma\\PhpstormProjects\\BotForDuck\\mp3downloads\\vidLink.json', updatedJsonData, 'utf8', (err) => {
-                if (err) {
-                    console.error('Error writing to the JSON file:', err);
-                    return;
-                }
-
-                console.log('Video link updated successfully!');
-            });
-        } catch (err) {
-            console.error('Error parsing JSON:', err);
-        }
-    });
-    runPythonScript();
-}
-
-function runPythonScript() {
-    // Spawn a child process to execute the Python script
-    const pythonProcess = spawn('python', ['example.py']);
-
-    // Capture the output data from the Python script
-    pythonProcess.stdout.on('data', (data) => {
-        console.log(`Python Output: ${data}`);
-    });
-
-    // Capture any error messages from the Python script
-    pythonProcess.stderr.on('data', (data) => {
-        console.error(`Python Error: ${data}`);
-    });
-
-    // Handle the close event when the Python script finishes execution
-    pythonProcess.on('close', (code) => {
-        console.log(`Python script finished with code ${code}`);
-    });
-}
