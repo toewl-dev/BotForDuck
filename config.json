@@ -1,6 +1,6 @@
 {
-  "token": "your token here",
-  "clientId": "1247460312144412774",
-  "guildId": "1247461507755937865",
-  "musicChannelID": "1247461508263444493"
+  "token": "Replace with your Bot Token",
+  "clientId": "Replace with your application ID",
+  "guildId": "Replace with your Guilds ID",
+  "musicChannelID": "Replace with the ID of the channel in which music should be played"
 }
